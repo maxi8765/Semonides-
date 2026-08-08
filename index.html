@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rhyming Incel — The Semonides Classifier</title>
+<style>
+  :root{
+    --ink:#17130f;
+    --paper:#f3ead8;
+    --red:#a63324;
+    --gold:#c89a3d;
+    --muted:#766b5c;
+    --card:#fff9ed;
+    --line:#d8c8aa;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 20% 0%, rgba(200,154,61,.14), transparent 35%),
+      linear-gradient(180deg,#efe3cd,#f7f0e3 45%,#ede1cc);
+    font-family: Georgia, "Times New Roman", serif;
+    min-height:100vh;
+  }
+  .app{
+    max-width:760px;
+    margin:0 auto;
+    padding:24px 18px 48px;
+  }
+  .mast{
+    text-align:center;
+    padding:20px 10px 18px;
+  }
+  .kicker{
+    font:700 12px/1.2 Arial,sans-serif;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--red);
+  }
+  h1{
+    margin:8px 0 4px;
+    font-size:clamp(42px,10vw,72px);
+    line-height:.9;
+    letter-spacing:-.04em;
+  }
+  .sub{
+    font-size:18px;
+    color:var(--muted);
+    margin:10px auto 0;
+    max-width:560px;
+  }
+  .seal{
+    width:86px;height:86px;border:2px solid var(--red);border-radius:50%;
+    display:grid;place-items:center;margin:18px auto 0;
+    transform:rotate(-7deg); color:var(--red);
+    font:700 12px/1.05 Arial,sans-serif;text-transform:uppercase;
+  }
+  .panel{
+    background:rgba(255,249,237,.92);
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:22px;
+    box-shadow:0 14px 40px rgba(52,39,22,.08);
+  }
+  .progress{
+    display:flex;gap:6px;margin-bottom:20px;
+  }
+  .pip{height:6px;flex:1;background:#dfd2bb;border-radius:9px;overflow:hidden}
+  .pip.on{background:var(--red)}
+  .qnum{
+    font:700 12px Arial,sans-serif;
+    letter-spacing:.15em;text-transform:uppercase;color:var(--muted)
+  }
+  .question{
+    font-size:30px;line-height:1.07;margin:8px 0 18px;
+  }
+  .answers{display:grid;gap:10px}
+  button{
+    width:100%;
+    border:1px solid var(--line);
+    background:#fffaf1;
+    color:var(--ink);
+    padding:15px 16px;
+    border-radius:14px;
+    text-align:left;
+    font:600 17px/1.2 Georgia,serif;
+    cursor:pointer;
+    transition:.16s ease;
+  }
+  button:hover{transform:translateY(-1px);border-color:#b79f78;background:white}
+  .primary{
+    background:var(--red); color:white; border-color:var(--red);
+    text-align:center; font-family:Arial,sans-serif; font-weight:800;
+  }
+  .ghost{
+    text-align:center;font-family:Arial,sans-serif;font-size:14px;background:transparent;
+  }
+  .result{text-align:center}
+  .animal{
+    font-size:88px;line-height:1;margin:4px 0 8px;
+  }
+  .result h2{font-size:40px;margin:0}
+  .ancient{
+    margin:18px 0;
+    padding:16px;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    font-size:18px;
+  }
+  .verdict{
+    font-size:23px;line-height:1.25;margin:18px 0 8px;
+  }
+  .small{
+    color:var(--muted);font:14px/1.45 Arial,sans-serif;
+  }
+  .taxonomy{
+    margin-top:18px;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  }
+  .taxon{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    font-size:14px;
+    background:rgba(255,255,255,.35)
+  }
+  .footer{
+    text-align:center;margin-top:18px;color:var(--muted);
+    font:12px/1.4 Arial,sans-serif;
+  }
+  .hidden{display:none}
+  @media (min-width:620px){
+    .taxonomy{grid-template-columns:repeat(5,minmax(0,1fr))}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="mast">
+    <div class="kicker">7th-century BC personality science</div>
+    <h1>Rhyming Incel</h1>
+    <div class="sub">For women only. Semonides had ten categories for women and apparently no category for “woman he had actually spoken to”.</div>
+    <div class="seal">Peer<br>Reviewed<br>by poets</div>
+  </header>
+
+  <main id="quiz" class="panel">
+    <div id="progress" class="progress"></div>
+    <div class="qnum" id="qnum"></div>
+    <div class="question" id="question"></div>
+    <div class="answers" id="answers"></div>
+  </main>
+
+  <main id="result" class="panel result hidden">
+    <div class="kicker">Semonides has judged you</div>
+    <div class="animal" id="animal"></div>
+    <h2 id="rtype"></h2>
+    <div class="ancient" id="ancient"></div>
+    <div class="verdict" id="verdict"></div>
+    <p class="small" id="modern"></p>
+    <button class="primary" onclick="restart()">Be stereotyped again</button>
+
+    <div class="taxonomy" id="taxonomy"></div>
+  </main>
+
+  <div class="footer">
+    For women only. Historical satire. Classification system approximately 2,700 years out of date.
+  </div>
+</div>
+
+<script>
+const types = {
+  pig:{name:"Pig-woman",emoji:"🐖",ancient:"Likes eating more than cleaning.",modern:"Diagnosis: enjoys food and has discovered that housework is not a moral category.",verdict:"Semonides has detected lunch."},
+  fox:{name:"Fox-woman",emoji:"🦊",ancient:"Peculiarly observant.",modern:"Diagnosis: notices things. In modern terminology this is generally considered useful.",verdict:"Suspiciously competent."},
+  donkey:{name:"Donkey-woman",emoji:"🫏",ancient:"Sexually promiscuous.",modern:"Diagnosis: Semonides has become extremely interested in somebody else’s private life.",verdict:"The poet has concerns."},
+  dog:{name:"Dog-woman",emoji:"🐕",ancient:"Disobedient.",modern:"Diagnosis: fails to recognise a 7th-century poet as the natural command authority.",verdict:"Did not follow instructions. Catastrophic."},
+  sea:{name:"Stormy sea-woman",emoji:"🌊",ancient:"Temperamental and changeable.",modern:"Diagnosis: possesses more than one mood.",verdict:"Weather has occurred."},
+  earth:{name:"Earth-woman",emoji:"🌍",ancient:"Greedy and material.",modern:"Diagnosis: has preferences concerning resources, comfort or money.",verdict:"Economics discovered early."},
+  weasel:{name:"Weasel-woman",emoji:"🦦",ancient:"Thieving and unpleasant.",modern:"Diagnosis: the evidence has now deteriorated into animal-based defamation.",verdict:"No due process was detected."},
+  horse:{name:"Horse-woman",emoji:"🐎",ancient:"Lazy and vain.",modern:"Diagnosis: may occasionally sit down while also knowing what a mirror is.",verdict:"Resting while attractive. Unacceptable."},
+  ape:{name:"Ape-woman",emoji:"🐒",ancient:"Unattractive.",modern:"Diagnosis: the poet has confused taxonomy with a bad date.",verdict:"Scientific method has left the building."},
+  bee:{name:"Bee-woman",emoji:"🐝",ancient:"Hard-working, productive and therefore the one approved type.",modern:"Diagnosis: congratulations, you meet Semonides’ workplace performance criteria.",verdict:"You have passed ancient HR."}
+};
+
+const questions = [
+  {
+    q:"A free afternoon appears. What happens?",
+    a:[
+      ["A long lunch.", "pig"],
+      ["I notice something everybody else missed.", "fox"],
+      ["Something social. Potentially complicated.", "donkey"],
+      ["Whatever I want, not what I was told.", "dog"]
+    ]
+  },
+  {
+    q:"Which accusation would annoy you least?",
+    a:[
+      ["Moody.", "sea"],
+      ["Materialistic.", "earth"],
+      ["Sneaky.", "weasel"],
+      ["Lazy.", "horse"]
+    ]
+  },
+  {
+    q:"Semonides walks into the room. Your response?",
+    a:[
+      ["Ignore him.", "dog"],
+      ["Observe him carefully.", "fox"],
+      ["Ask whether this is really his best material.", "ape"],
+      ["Get back to work.", "bee"]
+    ]
+  },
+  {
+    q:"Your relationship with rules is best described as:",
+    a:[
+      ["Useful when sensible.", "dog"],
+      ["Interesting evidence about whoever wrote them.", "fox"],
+      ["Negotiable.", "weasel"],
+      ["I am too busy to care.", "bee"]
+    ]
+  },
+  {
+    q:"Pick the most defensible vice.",
+    a:[
+      ["Eating.", "pig"],
+      ["Wanting things.", "earth"],
+      ["Sleeping in.", "horse"],
+      ["Having a sex life.", "donkey"]
+    ]
+  },
+  {
+    q:"Final question. What is probably wrong with this quiz?",
+    a:[
+      ["The sample size is one Greek poet.", "fox"],
+      ["The categories are insults pretending to be anthropology.", "ape"],
+      ["It says more about Semonides than women.", "sea"],
+      ["All of the above, but I finished the quiz anyway.", "bee"]
+    ]
+  }
+];
+
+let i=0, scores={};
+Object.keys(types).forEach(k=>scores[k]=0);
+
+function render(){
+  const q=questions[i];
+  document.getElementById("qnum").textContent=`Question ${i+1} of ${questions.length}`;
+  document.getElementById("question").textContent=q.q;
+  const p=document.getElementById("progress");
+  p.innerHTML=questions.map((_,n)=>`<div class="pip ${n<=i?'on':''}"></div>`).join("");
+  const ans=document.getElementById("answers");
+  ans.innerHTML="";
+  q.a.forEach(([label,key])=>{
+    const b=document.createElement("button");
+    b.textContent=label;
+    b.onclick=()=>choose(key);
+    ans.appendChild(b);
+  });
+}
+
+function choose(key){
+  scores[key]+=2;
+  i++;
+  if(i<questions.length) render(); else finish();
+}
+
+function finish(){
+  const ranking=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const best=ranking[0][0];
+  const t=types[best];
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+  document.getElementById("animal").textContent=t.emoji;
+  document.getElementById("rtype").textContent=t.name;
+  document.getElementById("ancient").textContent=`Semonides: “${t.ancient}”`;
+  document.getElementById("verdict").textContent=t.verdict;
+  document.getElementById("modern").textContent=t.modern;
+  document.getElementById("taxonomy").innerHTML = Object.values(types)
+    .map(x=>`<div class="taxon">${x.emoji}<br>${x.name.replace("-woman","")}</div>`).join("");
+}
+
+function restart(){
+  i=0; Object.keys(scores).forEach(k=>scores[k]=0);
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  render();
+}
+render();
+</script>
+</body>
+</html>

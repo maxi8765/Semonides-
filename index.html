@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rhyming Incel — The Semonides Classifier</title>
+<style>
+:root{
+  --ink:#17130f;
+  --paper:#f3ead8;
+  --red:#a63324;
+  --muted:#766b5c;
+  --card:#fff9ed;
+  --line:#d8c8aa;
+  --soft:#f6ead8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(200,154,61,.14), transparent 35%),
+    linear-gradient(180deg,#efe3cd,#f7f0e3 45%,#ede1cc);
+  font-family:Georgia,"Times New Roman",serif;
+  min-height:100vh;
+}
+.app{max-width:800px;margin:0 auto;padding:24px 18px 48px}
+.mast{text-align:center;padding:20px 10px 18px}
+.kicker{
+  font:700 12px/1.2 Arial,sans-serif;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--red)
+}
+h1{
+  margin:8px 0 4px;
+  font-size:clamp(42px,10vw,72px);
+  line-height:.9;
+  letter-spacing:-.04em
+}
+.sub{
+  font-size:18px;
+  color:var(--muted);
+  margin:10px auto 0;
+  max-width:650px
+}
+.women-only{
+  display:inline-block;
+  margin:15px 0 0;
+  padding:7px 12px;
+  border:1px solid var(--red);
+  border-radius:999px;
+  color:var(--red);
+  font:800 12px Arial,sans-serif;
+  letter-spacing:.1em;
+  text-transform:uppercase
+}
+.panel{
+  background:rgba(255,249,237,.94);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:22px;
+  margin-bottom:16px
+}
+.panel h2{font-size:30px;margin:0 0 12px}
+.panel p{font-size:17px;line-height:1.5;margin:0 0 14px}
+.note{
+  padding:14px 16px;
+  border-left:4px solid var(--red);
+  background:var(--soft);
+  border-radius:8px;
+  margin:16px 0
+}
+.choice-grid{display:grid;gap:12px}
+.test-card{
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fffaf1
+}
+.test-card h3{margin:0 0 8px;font-size:24px}
+.test-card p{font-size:15px;color:var(--muted);min-height:74px}
+button{
+  width:100%;
+  border:1px solid var(--line);
+  background:#fffaf1;
+  color:var(--ink);
+  padding:15px 16px;
+  border-radius:14px;
+  text-align:left;
+  font:600 17px/1.25 Georgia,serif;
+  cursor:pointer;
+  transition:.15s ease
+}
+button:hover{border-color:#b79f78;background:white}
+button:focus{outline:3px solid rgba(166,51,36,.2);outline-offset:2px}
+.primary{
+  background:var(--red);
+  color:#fff;
+  border-color:var(--red);
+  text-align:center;
+  font-family:Arial,sans-serif;
+  font-weight:800
+}
+.secondary{
+  text-align:center;
+  font-family:Arial,sans-serif;
+  font-size:14px;
+  background:transparent
+}
+.progress{display:flex;gap:6px;margin-bottom:20px}
+.pip{height:6px;flex:1;background:#dfd2bb;border-radius:9px}
+.pip.on{background:var(--red)}
+.qnum{
+  font:700 12px Arial,sans-serif;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--muted)
+}
+.question{font-size:30px;line-height:1.1;margin:8px 0 18px}
+.answers{display:grid;gap:10px}
+.result{text-align:center}
+.icon{font-size:78px;line-height:1;margin:6px 0 8px}
+.result h2{font-size:40px;margin:0}
+.core{
+  margin:18px 0;
+  padding:16px;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  font-size:18px
+}
+.verdict{font-size:23px;line-height:1.25;margin:18px 0 8px}
+.small{color:var(--muted);font:14px/1.45 Arial,sans-serif}
+.taxonomy-title{
+  margin:26px 0 10px;
+  font:800 13px Arial,sans-serif;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted)
+}
+.taxonomy{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px
+}
+.taxon{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px 8px;
+  font-size:14px;
+  background:rgba(255,255,255,.35);
+  text-align:center
+}
+.taxon .emoji{
+  font-size:30px;
+  display:block;
+  margin-bottom:4px
+}
+.details{text-align:left;margin-top:16px}
+.details-grid{display:grid;gap:12px}
+.detail-box{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  background:#fffaf1
+}
+.detail-label{
+  display:block;
+  font:800 11px Arial,sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--red);
+  margin-bottom:5px
+}
+.footer{
+  text-align:center;
+  margin-top:18px;
+  color:var(--muted);
+  font:12px/1.4 Arial,sans-serif
+}
+.hidden{display:none}
+@media(min-width:620px){
+  .choice-grid{grid-template-columns:1fr 1fr}
+  .taxonomy{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .taxonomy.men{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .details-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="mast">
+  <div class="kicker">Bad classification systems for modern women</div>
+  <h1>Rhyming Incel</h1>
+  <div class="sub">One ancient taxonomy. One completely invented modern one.</div>
+  <div class="women-only">For women only</div>
+</header>
+
+<section id="home" class="panel">
+  <h2>Choose a test</h2>
+  <div class="choice-grid">
+    <div class="test-card">
+      <h3>Which Semonides woman are you?</h3>
+      <p>Ten actual categories from a Greek poet writing in the 7th century BC.</p>
+      <button class="primary" id="openWomen">Classify me</button>
+    </div>
+    <div class="test-card">
+      <h3>Which animal is the bloke?</h3>
+      <p>Seven completely made-up male categories inspired by the same questionable taxonomic method.</p>
+      <button class="primary" id="openMen">Classify him</button>
+    </div>
+  </div>
+</section>
+
+<section id="womenIntro" class="panel hidden">
+  <h2>The Semonides test</h2>
+  <p>Semonides of Amorgos was a Greek poet writing in the 7th century BC. In a surviving poem usually known as the <em>Types of Women</em>, he divided women into ten animal and elemental stereotypes.</p>
+  <p>There are pig-women, fox-women, donkey-women, dog-women, stormy sea-women, Earth-women, weasel-women, horse-women, ape-women and bee-women. The bee is the only category he approves of.</p>
+  <div class="note">Answer ten questions and the app will decide which of his ten stereotypes you are. After the result, you can inspect all ten categories.</div>
+  <button class="primary" id="startWomen">Classify me using obsolete Greek misogyny</button>
+</section>
+
+<section id="menIntro" class="panel hidden">
+  <h2>The seven male animals</h2>
+  <p>These male categories are completely made up for this app. Semonides did not write them. They are invented in the spirit of his method: take a handful of recurring behaviours, attach an animal to each one and pretend you have discovered a taxonomy.</p>
+  <p>The seven categories are the Bonobo, Octopus, Greyhound, Wasp, Panda, Polar Bear and Labrador.</p>
+  <div class="note">Answer ten questions about the bloke. The app will assign him the animal whose behaviour best matches your answers. After the result, you can tap every animal to see the full description.</div>
+  <button class="primary" id="startMen">Classify the bloke</button>
+</section>
+
+<main id="quiz" class="panel hidden">
+  <div id="progress" class="progress"></div>
+  <div class="qnum" id="qnum"></div>
+  <div class="question" id="question"></div>
+  <div class="answers" id="answers"></div>
+</main>
+
+<main id="result" class="panel result hidden">
+  <div class="kicker" id="resultKicker"></div>
+  <div class="icon" id="resultIcon"></div>
+  <h2 id="resultTitle"></h2>
+  <div class="core" id="resultCore"></div>
+  <div class="verdict" id="resultVerdict"></div>
+  <p class="small" id="resultModern"></p>
+
+  <div class="taxonomy-title" id="taxonomyTitle"></div>
+  <p class="small" id="taxonomyHelp"></p>
+  <div class="taxonomy" id="taxonomy"></div>
+
+  <section id="details" class="panel details hidden" aria-live="polite">
+    <div class="kicker">Category file</div>
+    <div class="icon" id="detailIcon" style="font-size:54px"></div>
+    <h2 id="detailTitle"></h2>
+    <div class="details-grid">
+      <div class="detail-box">
+        <span class="detail-label" id="label1"></span>
+        <div id="detail1"></div>
+      </div>
+      <div class="detail-box">
+        <span class="detail-label" id="label2"></span>
+        <div id="detail2"></div>
+      </div>
+      <div class="detail-box">
+        <span class="detail-label" id="label3"></span>
+        <div id="detail3"></div>
+      </div>
+      <div class="detail-box">
+        <span class="detail-label">Verdict</span>
+        <div id="detailVerdict"></div>
+      </div>
+    </div>
+    <p id="detailLong" style="margin-top:14px"></p>
+    <button id="closeDetails" class="secondary">Close category</button>
+  </section>
+
+  <button id="restartBtn" class="primary" style="margin-top:16px">Start again</button>
+</main>
+
+<div class="footer">For women only. Classification system approximately 2,700 years out of date. And it was shit then.</div>
+</div>
+
+<script>
+const womenTypes={
+  pig:{name:"Pig-woman",emoji:"🐖",core:"She supposedly prefers eating to cleaning and leaves domestic work undone.",target:"Appetite, domestic untidiness and failure to perform the household role expected of women.",modern:"Enjoying food or disliking housework is treated as a moral defect because Semonides assumes domestic labour is a woman's defining duty.",verdict:"Semonides has detected lunch.",long:"The category turns appetite and domestic behaviour into character defects. The assumption underneath it is that a woman's value can be inferred from how eagerly she cleans a house."},
+  fox:{name:"Fox-woman",emoji:"🦊",core:"She is unusually observant and notices both good and bad things.",target:"Intelligence, watchfulness and the inconvenient habit of noticing what is going on.",modern:"A quality that would usually count as perceptiveness is reframed as suspicious because the woman cannot easily be deceived or managed.",verdict:"Suspiciously competent.",long:"The alleged vice is essentially cognition. Semonides' problem is not that she fails to understand things. It is that she understands too much."},
+  donkey:{name:"Donkey-woman",emoji:"🫏",core:"She is portrayed as sexually available and driven by appetite.",target:"Female sexual autonomy and behaviour outside the poet's preferred standard of restraint.",modern:"The category converts a woman's sex life into public evidence about her moral worth while leaving the classifier outside the classification.",verdict:"The poet has concerns.",long:"This is less taxonomy than sexual policing. The category says more about expected control of female sexuality than about a coherent personality type."},
+  dog:{name:"Dog-woman",emoji:"🐕",core:"She is noisy, difficult to control and unwilling to obey.",target:"Disobedience, argument and resistance to male authority.",modern:"Independence becomes a defect because obedience is silently treated as the default female virtue.",verdict:"Did not follow instructions. Catastrophic.",long:"Her principal fault is not stupidity or cruelty. It is that she will not do what she is told."},
+  sea:{name:"Stormy sea-woman",emoji:"🌊",core:"She changes temperament, sometimes calm and pleasant and sometimes turbulent.",target:"Emotional variability and unpredictability.",modern:"Having different moods on different days becomes evidence of a defective nature.",verdict:"Weather has occurred.",long:"A person whose mood changes with circumstances is simply a person. The metaphor disguises that banality as diagnosis."},
+  earth:{name:"Earth-woman",emoji:"🌍",core:"She is represented as greedy, sluggish and interested in material consumption.",target:"Material appetite, comfort and lack of industrious domestic behaviour.",modern:"Wanting resources becomes greed when the classifier already assumes what a woman should want and how hard she should work for others.",verdict:"Economics discovered early.",long:"The category bundles consumption, laziness and material desire into one moral complaint."},
+  weasel:{name:"Weasel-woman",emoji:"🦦",core:"She is described as thieving, unpleasant and sexually unattractive.",target:"Dishonesty, disagreeableness and physical undesirability.",modern:"Several unrelated insults are compressed into an animal label, which is convenient because a metaphor does not require evidence.",verdict:"No due process was detected.",long:"The taxonomy stops pretending to classify behaviour and becomes simple abuse."},
+  horse:{name:"Horse-woman",emoji:"🐎",core:"She is said to avoid work while caring excessively about washing, appearance and presentation.",target:"Vanity, leisure and unwillingness to perform domestic labour.",modern:"Personal grooming and rest are condemned because they compete with the labour Semonides thinks women should be doing.",verdict:"Resting while attractive. Unacceptable.",long:"Time spent on oneself is treated as vanity because the preferred alternative is productive work for the household."},
+  ape:{name:"Ape-woman",emoji:"🐒",core:"She is principally condemned for being physically unattractive.",target:"Appearance.",modern:"There is barely a behavioural claim here. Physical attractiveness is simply treated as evidence of human value.",verdict:"Scientific method has left the building.",long:"The system is not trying to explain women. It is ranking women according to the preferences and grievances of the man doing the ranking."},
+  bee:{name:"Bee-woman",emoji:"🐝",core:"She works hard, manages the household, supports the family and is the only type Semonides presents positively.",target:"Industriousness, domestic competence and usefulness.",modern:"The one 'good' woman is the woman whose behaviour most directly serves the household and the people around her.",verdict:"You have passed ancient HR.",long:"The bee reveals the scoring function. The preferred woman is productive, orderly and useful. The bad types are largely deviations from that model."}
+};
+
+const menTypes={
+  bonobo:{
+    name:"The Bonobo",
+    emoji:"🐒",
+    core:"He turns up wanting sex, wants sex all the time and has a tantrum or leaves if you will not.",
+    target:"Sexual entitlement plus poor tolerance for boundaries.",
+    modern:"Wanting sex is not the defining feature. The defining feature is treating refusal as a grievance.",
+    verdict:"Consent failed to match his itinerary.",
+    long:"The Bonobo is the bloke whose apparent affection turns out to have a fairly narrow operating condition. Everything is fine while sex is available. Remove sex and suddenly there is a constitutional crisis."
+  },
+  octopus:{
+    name:"The Octopus",
+    emoji:"🐙",
+    core:"He has sex and then disappears, or keeps following up while remaining emotionally impossible to reach.",
+    target:"Physical contact without emotional connection.",
+    modern:"There may be messages, dates and repeat sex, but emotional intimacy never gets any closer.",
+    verdict:"Plenty of arms. No emotional handhold.",
+    long:"The Octopus does not necessarily ghost in the literal sense. Some keep coming back. The constant is that the physical relationship has somewhere to go and the emotional one does not."
+  },
+  greyhound:{
+    name:"The Greyhound",
+    emoji:"🐕",
+    core:"He runs like an express train and you are left wondering how the entire encounter accelerated that quickly.",
+    target:"Very rapid escalation without much checking of pace.",
+    modern:"He usually follows up afterwards as though nothing unusual happened, which makes the speed even stranger.",
+    verdict:"Zero to shagged before the timetable loaded.",
+    long:"The Greyhound is about velocity. Conversation, kissing, clothes and sex can happen so quickly that your own processing appears to arrive after the event."
+  },
+  wasp:{
+    name:"The Wasp",
+    emoji:"🐝",
+    core:"He is mean and you cannot understand why you keep replying.",
+    target:"Repeated unpleasantness combined with inexplicably persistent contact.",
+    modern:"The oddity is not identifying that he is mean. The oddity is discovering that your reply button still works.",
+    verdict:"Keeps stinging. Somehow still in contacts.",
+    long:"The Wasp offers a simple behavioural puzzle. His messages make continued contact look irrational. Yet the conversation survives, often far longer than the evidence suggests it should."
+  },
+  panda:{
+    name:"The Panda",
+    emoji:"🐼",
+    core:"He is really polite, will kiss you and seems interested but never actually tries to get any further.",
+    target:"Affection and attraction without escalation.",
+    modern:"He can generate all the signals of interest while leaving you unsure whether he is shy, cautious, uninterested in sex or waiting for you to lead.",
+    verdict:"Cuddly. Endangered libido.",
+    long:"Nothing is obviously wrong with the Panda. That is precisely why the category is confusing. There is enough warmth to look romantic and not enough momentum to know whether anything is actually happening."
+  },
+  polarbear:{
+    name:"The Polar Bear",
+    emoji:"🐻‍❄️",
+    core:"He is lovely, the sex is great and then in the morning he turns cold. The same thing keeps happening.",
+    target:"A recurring split between warmth during intimacy and distance afterwards.",
+    modern:"Because the warmth returns, each cold morning can look temporary even when the sequence itself is stable.",
+    verdict:"Defrosts at night. Refreezes by breakfast.",
+    long:"One odd morning means nothing. Warm, intimate, cold, repeat is a pattern. The Polar Bear is defined by the temperature change, not by either half on its own."
+  },
+  labrador:{
+    name:"The Labrador",
+    emoji:"🐕‍🦺",
+    core:"He is really nice, lots of fun and seems close to ideal for companionship and sex, but you are just not that into him.",
+    target:"Compatibility without enough attraction.",
+    modern:"There is no villain and no pathology. The ingredients look right but the reaction does not happen.",
+    verdict:"Excellent candidate. Wrong vacancy.",
+    long:"The Labrador is the difficult one because logic keeps arguing for him. He may be funny, kind, reliable and easy company. None of those things automatically manufacture desire."
+  }
+};
+
+const womenQuestions=[
+{q:"A free afternoon appears. What happens?",a:[["A long lunch.","pig"],["I notice something everybody else missed.","fox"],["Something social. Potentially complicated.","donkey"],["Whatever I want, not what I was told.","dog"]]},
+{q:"At a dinner party, which role do you naturally fall into?",a:[["I work out what everyone is really thinking.","fox"],["I flirt with whoever looks interesting.","donkey"],["I ignore the seating plan completely.","dog"],["My mood depends heavily on the company.","sea"]]},
+{q:"Someone tells you what a 'proper woman' should do. Your reaction?",a:[["Ask whether there are also rules for my private life.","donkey"],["Do the opposite on principle.","dog"],["Become rapidly less calm.","sea"],["Ask who benefits from this arrangement.","earth"]]},
+{q:"Which description sounds least offensive?",a:[["Difficult to control.","dog"],["Changeable.","sea"],["Fond of money and comfort.","earth"],["Capable of getting away with things.","weasel"]]},
+{q:"You unexpectedly get a day with no obligations. What is most tempting?",a:[["Follow whatever mood I wake up in.","sea"],["Spend money on something unnecessary.","earth"],["Find a loophole in the definition of 'obligation'.","weasel"],["Stay in bed much longer than Semonides would approve of.","horse"]]},
+{q:"Which accusation would you be most likely to shrug off?",a:[["Materialistic.","earth"],["Sneaky.","weasel"],["Vain.","horse"],["Not everyone's idea of beautiful.","ape"]]},
+{q:"Semonides is compiling notes about you. What does he write first?",a:[["Untrustworthy. Probably stole the pencil.","weasel"],["Far too interested in clothes and not enough in chores.","horse"],["He doesn't like the look of me.","ape"],["Annoyingly productive.","bee"]]},
+{q:"Your ideal Saturday morning?",a:[["Sleep late and take my time getting ready.","horse"],["Not caring whether anyone finds me decorative.","ape"],["Get several things done before lunch.","bee"],["Breakfast becomes lunch.","pig"]]},
+{q:"Which modern offence against Semonides are you most comfortable committing?",a:[["Existing without meeting his beauty standard.","ape"],["Being competent enough to make him grudgingly approve.","bee"],["Eating for pleasure.","pig"],["Noticing exactly what he is doing.","fox"]]},
+{q:"Final question. What would most upset Semonides about you?",a:[["I am useful, but not because he told me to be.","bee"],["I take food seriously.","pig"],["I can see through the classification system.","fox"],["My sex life is none of his business.","donkey"]]}
+];
+
+const menQuestions=[
+{q:"You say you do not want sex tonight. What happens?",a:[["He sulks, argues or leaves.","bonobo"],["He accepts it, but emotional connection is generally absent anyway.","octopus"],["He stays polite and does not push.","panda"],["He turns noticeably cold.","polarbear"]]},
+{q:"After sex, what most often happens?",a:[["He disappears or remains emotionally unreachable.","octopus"],["He follows up normally as though everything moved at a perfectly ordinary speed.","greyhound"],["He is warm that night and cold the next morning.","polarbear"],["He is still lovely. I am still not very excited.","labrador"]]},
+{q:"What is strangest about the pace?",a:[["He expects the physical part immediately and reacts badly if blocked.","bonobo"],["Everything accelerates before I have really processed it.","greyhound"],["It barely moves at all despite obvious warmth.","panda"],["Pace is not the issue. The temperature change afterwards is.","polarbear"]]},
+{q:"What keeps you most confused?",a:[["Why he keeps contacting me without becoming emotionally closer.","octopus"],["Why I keep replying when he is plainly mean.","wasp"],["Why he never actually makes the next move.","panda"],["Why I am not more attracted to someone objectively lovely.","labrador"]]},
+{q:"Which description best fits his messages?",a:[["Sexual expectation followed by irritation if things do not go his way.","bonobo"],["Enough contact to keep things alive but not enough emotional substance.","octopus"],["Blunt or mean, yet somehow the conversation continues.","wasp"],["Polite, warm and careful, but nothing progresses.","panda"]]},
+{q:"What happens the morning after?",a:[["There is often no meaningful morning after because he fades out.","octopus"],["He behaves like the speed of the previous night was completely normal.","greyhound"],["He goes noticeably cold.","polarbear"],["He is still perfectly nice. I am just still not that into him.","labrador"]]},
+{q:"Which problem would be most obvious to a friend?",a:[["He behaves as if sex is owed.","bonobo"],["He is mean to me.","wasp"],["He is lovely but seems incapable of moving beyond kissing.","panda"],["There is no obvious problem. I just do not really want him.","labrador"]]},
+{q:"Which pattern repeats?",a:[["Fast escalation followed by casual normality.","greyhound"],["Mean behaviour followed by me replying anyway.","wasp"],["Great night, cold morning, great night, cold morning.","polarbear"],["Good company and good logic, but no real spark.","labrador"]]},
+{q:"What is the central mismatch?",a:[["He thinks desire creates entitlement.","bonobo"],["He creates momentum faster than I can process it.","greyhound"],["He gives me reasons not to reply and I still do.","wasp"],["Everything looks compatible except my actual attraction.","labrador"]]},
+{q:"Final question. Which sentence sounds most familiar?",a:[["Why is he angry just because I said no?","bonobo"],["How did that go from zero to 100 so fast?","greyhound"],["Why am I replying to this arsehole again?","wasp"],["Why doesn't he ever actually try anything?","panda"]]}
+];
+
+let mode=null;
+let questions=[];
+let types={};
+let i=0;
+let scores={};
+
+const screens=["home","womenIntro","menIntro","quiz","result"];
+
+function show(id){
+  screens.forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id));
+}
+
+document.getElementById("openWomen").addEventListener("click",()=>show("womenIntro"));
+document.getElementById("openMen").addEventListener("click",()=>show("menIntro"));
+document.getElementById("startWomen").addEventListener("click",()=>startTest("women"));
+document.getElementById("startMen").addEventListener("click",()=>startTest("men"));
+document.getElementById("restartBtn").addEventListener("click",()=>{
+  document.getElementById("details").classList.add("hidden");
+  show("home");
+});
+document.getElementById("closeDetails").addEventListener("click",()=>{
+  document.getElementById("details").classList.add("hidden");
+});
+
+function startTest(m){
+  mode=m;
+  questions=m==="women"?womenQuestions:menQuestions;
+  types=m==="women"?womenTypes:menTypes;
+  i=0;
+  scores={};
+  Object.keys(types).forEach(k=>scores[k]=0);
+  show("quiz");
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q=questions[i];
+  document.getElementById("qnum").textContent=`Question ${i+1} of ${questions.length}`;
+  document.getElementById("question").textContent=q.q;
+  document.getElementById("progress").innerHTML=questions
+    .map((_,n)=>`<div class="pip ${n<=i?'on':''}"></div>`).join("");
+
+  const box=document.getElementById("answers");
+  box.innerHTML="";
+  q.a.forEach(([label,key])=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.textContent=label;
+    b.addEventListener("click",()=>{
+      scores[key]+=2;
+      i++;
+      if(i<questions.length) renderQuestion();
+      else finish();
+    });
+    box.appendChild(b);
+  });
+}
+
+function finish(){
+  const winner=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+  const t=types[winner];
+
+  show("result");
+  document.getElementById("resultKicker").textContent=
+    mode==="women" ? "Semonides has judged you" : "The bloke has been classified";
+  document.getElementById("resultIcon").textContent=t.emoji;
+  document.getElementById("resultTitle").textContent=t.name;
+  document.getElementById("resultCore").textContent=t.core;
+  document.getElementById("resultVerdict").textContent=t.verdict;
+  document.getElementById("resultModern").textContent=t.modern;
+
+  document.getElementById("taxonomyTitle").textContent=
+    mode==="women" ? "The complete Semonides taxonomy" : "The complete made-up male taxonomy";
+  document.getElementById("taxonomyHelp").textContent=
+    "Tap any type to open its full category file.";
+
+  const tax=document.getElementById("taxonomy");
+  tax.className="taxonomy"+(mode==="men"?" men":"");
+  tax.innerHTML="";
+
+  Object.entries(types).forEach(([key,x])=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="taxon";
+    b.innerHTML=`<span class="emoji">${x.emoji}</span>${x.name}`;
+    b.addEventListener("click",()=>showDetails(key));
+    tax.appendChild(b);
+  });
+
+  showDetails(winner);
+}
+
+function showDetails(key){
+  const t=types[key];
+  document.getElementById("detailIcon").textContent=t.emoji;
+  document.getElementById("detailTitle").textContent=t.name;
+
+  if(mode==="women"){
+    document.getElementById("label1").textContent="Semonides' claim";
+    document.getElementById("label2").textContent="What he is criticising";
+    document.getElementById("label3").textContent="Modern reading";
+  }else{
+    document.getElementById("label1").textContent="The pattern";
+    document.getElementById("label2").textContent="What is happening";
+    document.getElementById("label3").textContent="Reading";
+  }
+
+  document.getElementById("detail1").textContent=t.core;
+  document.getElementById("detail2").textContent=t.target;
+  document.getElementById("detail3").textContent=t.modern;
+  document.getElementById("detailVerdict").textContent=t.verdict;
+  document.getElementById("detailLong").textContent=t.long;
+  document.getElementById("details").classList.remove("hidden");
+}
+</script>
+</body>
+</html>
